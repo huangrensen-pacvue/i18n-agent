@@ -104,6 +104,7 @@ const translations = {
     save: 'Save',
     credentials_saved: 'Credentials saved',
     credentials_required: 'Please configure credentials',
+    cdn_select_required: 'Please select at least one CDN source',
     
     // Modal
     upload_to_lokalise: 'Upload to Lokalise',
@@ -229,6 +230,7 @@ const translations = {
     save: '保存',
     credentials_saved: '密钥已保存',
     credentials_required: '请先配置密钥',
+    cdn_select_required: '请至少选择一个 CDN 源',
     
     // Modal
     upload_to_lokalise: '上传到 Lokalise',
@@ -275,6 +277,7 @@ let lastTranslations = null;
 
 let credentialsModalRequired = false;
 const credentialsStorageKey = 'i18nAgentCredentials';
+let availableCdnSources = [];
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -382,6 +385,36 @@ function updateButtonsState() {
   if (uploadBtn) uploadBtn.disabled = !canUpload;
 
   updateStepStatuses();
+}
+
+function renderCdnSources(sources) {
+  availableCdnSources = Array.isArray(sources) ? sources : [];
+  const cdnSourcesEl = document.getElementById('cdnSources');
+  if (!cdnSourcesEl) return;
+  cdnSourcesEl.innerHTML = '';
+  availableCdnSources.forEach((name) => {
+    const isDefault = /common/i.test(name) || /amazonsearch/i.test(name);
+    const label = document.createElement('label');
+    label.className = 'checkbox';
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.checked = isDefault;
+    input.dataset.sourceName = name;
+    const span = document.createElement('span');
+    span.textContent = name;
+    label.appendChild(input);
+    label.appendChild(span);
+    cdnSourcesEl.appendChild(label);
+  });
+}
+
+function getSelectedCdnSources() {
+  const cdnSourcesEl = document.getElementById('cdnSources');
+  if (!cdnSourcesEl) return [];
+  const inputs = cdnSourcesEl.querySelectorAll('input[type="checkbox"][data-source-name]');
+  return Array.from(inputs)
+    .filter(input => input.checked)
+    .map(input => input.dataset.sourceName);
 }
 
 function openCredentialsModal(force = false) {
@@ -548,11 +581,8 @@ async function checkConfig() {
       statusDot.className = 'status-dot success';
       statusText.textContent = t('config_ready');
       
-      // Show CDN sources
-      const cdnSourcesEl = document.getElementById('cdnSources');
-      cdnSourcesEl.innerHTML = data.cdnSources.map(name => 
-        `<div class="cdn-source">${name}</div>`
-      ).join('');
+      // Show CDN sources with selection
+      renderCdnSources(data.cdnSources);
     } else {
       statusDot.className = 'status-dot error';
       statusText.textContent = t('config_error');
@@ -574,7 +604,19 @@ async function loadCDN() {
   setStepStatus('stepStatusLoad', 'step_running');
   
   try {
-    const response = await fetch('/api/load-cdn', { method: 'POST' });
+    const selectedSources = getSelectedCdnSources();
+    if (selectedSources.length === 0) {
+      showToast(t('cdn_select_required'), 'warning');
+      setStepStatus('stepStatusLoad', 'step_failed', 'error');
+      resultEl.textContent = t('cdn_select_required');
+      resultEl.className = 'result-info show error';
+      return false;
+    }
+    const response = await fetch('/api/load-cdn', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ selectedSources })
+    });
     const data = await response.json();
     
     if (data.success) {

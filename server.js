@@ -78,8 +78,17 @@ app.post('/api/load-cdn', async (req, res) => {
     if (!sessionData.config) {
       sessionData.config = await loadConfig();
     }
-    
-    const translationData = await loadAllTranslations(sessionData.config.cdn.sources);
+    const selectedSources = Array.isArray(req.body?.selectedSources) ? req.body.selectedSources : [];
+    const allSources = sessionData.config.cdn.sources || [];
+    const sourcesToLoad = selectedSources.length > 0
+      ? allSources.filter(source => selectedSources.includes(source.name))
+      : allSources;
+
+    if (sourcesToLoad.length === 0) {
+      return res.json({ success: false, message: '未选择任何 CDN 源' });
+    }
+
+    const translationData = await loadAllTranslations(sourcesToLoad);
     sessionData.translationData = translationData;
     
     res.json({
