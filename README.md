@@ -17,33 +17,27 @@ cd i18n-agent
 npm install
 ```
 
-## 配置
-
-1. 复制配置示例文件:
-```bash
-cp config.example.js config.js
-```
-
-2. 编辑 `config.js`，填入你的API密钥:
-```javascript
-export default {
-  deepseek: {
-    apiKey: 'your_deepseek_api_key',
-  },
-  lokalise: {
-    apiToken: 'your_lokalise_api_token',
-    projectId: 'your_project_id',
-  },
-  // ...
-};
-```
-
-或者使用交互式初始化:
-```bash
-node index.js init
-```
-
 ## 使用方法
+
+### Web 方式（推荐）
+
+启动 Web 服务并在浏览器中操作全流程：
+
+```bash
+# 启动 Web 服务（默认端口 7777）
+pnpm run web
+# 或
+node server.js
+```
+
+访问：`http://localhost:7777`
+
+Web 端流程与 CLI 完全一致：**加载 CDN → 扫描 → 检查 → 替换 → 翻译 → 上传**。  
+并额外支持：
+- 目录选择器 / 历史目录
+- 步骤状态提示与自动折叠
+- 翻译可编辑、可勾选上传
+- 未翻译一键导出（每行一条）
 
 ### 1. 完整更新流程（推荐）
 
