@@ -97,6 +97,12 @@ const translations = {
     export_untranslated: 'Export',
     export_missing_done: 'Untranslated exported',
     export_only_text: 'Only text',
+    credentials_title: 'Credentials',
+    deepseek_key: 'DeepSeek API Key',
+    lokalise_token: 'Lokalise API Token',
+    save: 'Save',
+    credentials_saved: 'Credentials saved',
+    credentials_required: 'Please configure credentials',
     
     // Modal
     upload_to_lokalise: 'Upload to Lokalise',
@@ -215,6 +221,12 @@ const translations = {
     export_untranslated: '导出',
     export_missing_done: '未翻译已导出',
     export_only_text: '仅文本',
+    credentials_title: '密钥配置',
+    deepseek_key: 'DeepSeek API Key',
+    lokalise_token: 'Lokalise API Token',
+    save: '保存',
+    credentials_saved: '密钥已保存',
+    credentials_required: '请先配置密钥',
     
     // Modal
     upload_to_lokalise: '上传到 Lokalise',
@@ -258,6 +270,9 @@ let cdnLoaded = false;
 let lastScanOk = false;
 let lastCheckResult = null;
 let lastTranslations = null;
+
+let credentialsModalRequired = false;
+const credentialsStorageKey = 'i18nAgentCredentials';
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -367,6 +382,79 @@ function updateButtonsState() {
   updateStepStatuses();
 }
 
+function openCredentialsModal(force = false) {
+  credentialsModalRequired = force;
+  const stored = loadStoredCredentials();
+  if (stored) {
+    document.getElementById('deepseekKeyInput').value = stored.deepseekKey || '';
+    document.getElementById('lokaliseTokenInput').value = stored.lokaliseToken || '';
+  }
+  document.getElementById('credentialsModal').classList.add('show');
+  updateModalOpenState();
+}
+
+function closeCredentialsModal() {
+  if (credentialsModalRequired) {
+    return;
+  }
+  document.getElementById('credentialsModal').classList.remove('show');
+  updateModalOpenState();
+}
+
+async function saveCredentials() {
+  const deepseekKey = document.getElementById('deepseekKeyInput').value.trim();
+  const lokaliseToken = document.getElementById('lokaliseTokenInput').value.trim();
+  try {
+    const response = await fetch('/api/credentials', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deepseekKey, lokaliseToken })
+    });
+    const data = await response.json();
+    if (data.success) {
+      saveStoredCredentials({ deepseekKey, lokaliseToken });
+      configState.hasDeepseekKey = !!deepseekKey;
+      configState.hasLokaliseToken = !!lokaliseToken;
+      updateButtonsState();
+      showToast(t('credentials_saved'), 'success');
+      credentialsModalRequired = false;
+      closeCredentialsModal();
+    } else {
+      showToast(data.message || t('credentials_required'), 'error');
+    }
+  } catch (error) {
+    showToast(error.message || t('credentials_required'), 'error');
+  }
+}
+
+function loadStoredCredentials() {
+  try {
+    const raw = localStorage.getItem(credentialsStorageKey);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') return null;
+    return {
+      deepseekKey: (parsed.deepseekKey || '').trim(),
+      lokaliseToken: (parsed.lokaliseToken || '').trim()
+    };
+  } catch {
+    return null;
+  }
+}
+
+function saveStoredCredentials({ deepseekKey, lokaliseToken }) {
+  const safeDeepseekKey = (deepseekKey || '').trim();
+  const safeLokaliseToken = (lokaliseToken || '').trim();
+  if (!safeDeepseekKey && !safeLokaliseToken) {
+    localStorage.removeItem(credentialsStorageKey);
+    return;
+  }
+  localStorage.setItem(credentialsStorageKey, JSON.stringify({
+    deepseekKey: safeDeepseekKey,
+    lokaliseToken: safeLokaliseToken
+  }));
+}
+
 function setStepStatus(id, statusKey, className) {
   const el = document.getElementById(id);
   if (!el) return;
@@ -441,6 +529,13 @@ async function checkConfig() {
       };
       updateConfigDefaults();
       updateButtonsState();
+      const stored = loadStoredCredentials();
+      const hasStoredDeepseek = !!stored?.deepseekKey;
+      const hasStoredLokalise = !!stored?.lokaliseToken;
+      if ((!configState.hasDeepseekKey || !configState.hasLokaliseToken) &&
+          !(hasStoredDeepseek && hasStoredLokalise)) {
+        openCredentialsModal(true);
+      }
 
       statusDot.className = 'status-dot success';
       statusText.textContent = t('config_ready');
@@ -756,6 +851,12 @@ async function translateMissing() {
     return false;
   }
   
+  if (!configState.hasDeepseekKey) {
+    openCredentialsModal(true);
+    showToast(t('credentials_required'), 'warning');
+    return false;
+  }
+
   const confirmTranslate = await showConfirm(t('confirm_translate', { count: missingCount }));
   if (!confirmTranslate) {
     return false;
@@ -1642,6 +1743,18 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Auto load config + CDN on initial page load
   (async () => {
+    const stored = loadStoredCredentials();
+    if (stored && (stored.deepseekKey || stored.lokaliseToken)) {
+      try {
+        await fetch('/api/credentials', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(stored)
+        });
+      } catch {
+        // Ignore; user can re-save via modal
+      }
+    }
     await checkConfig();
     await loadCDN();
   })();

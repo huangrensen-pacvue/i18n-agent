@@ -5,14 +5,14 @@
 export default {
   // DeepSeek API 配置
   deepseek: {
-    apiKey: 'sk-86bc4e0605014153b8b1b840e4c71c02',
+    apiKey: '',
     model: 'deepseek-chat',
     temperature: 0.1, 
   },
 
   // Lokalise API 配置
   lokalise: {
-    apiToken: '26a3ed10cae13ffc3dcafc690d0a8550b0fbaf31',
+    apiToken: '',
     projectId: 'your_project_id_here',
     defaultTag: '', // 可选：默认上传标签
   },

@@ -25,7 +25,7 @@ async function loadConfig() {
   try {
     const { pathToFileURL } = await import('url');
     const configPath = path.join(__dirname, 'config.js');
-    const configUrl = pathToFileURL(configPath).href;
+    const configUrl = `${pathToFileURL(configPath).href}?t=${Date.now()}`;
     const config = await import(configUrl);
     return config.default;
   } catch (error) {
@@ -57,11 +57,13 @@ app.get('/api/config', async (req, res) => {
       return res.json({ success: false, message: '配置文件不存在，请先创建 config.js' });
     }
     sessionData.config = config;
+    const deepseekKey = (config.deepseek?.apiKey || '').trim();
+    const lokaliseToken = (config.lokalise?.apiToken || '').trim();
     res.json({
       success: true,
       cdnSources: config.cdn.sources.map(s => s.name),
-      hasDeepseekKey: !!config.deepseek?.apiKey && config.deepseek.apiKey !== 'your_deepseek_api_key_here',
-      hasLokaliseToken: !!config.lokalise?.apiToken && config.lokalise.apiToken !== 'your_lokalise_api_token_here',
+      hasDeepseekKey: deepseekKey !== '' && deepseekKey !== 'your_deepseek_api_key_here',
+      hasLokaliseToken: lokaliseToken !== '' && lokaliseToken !== 'your_lokalise_api_token_here',
       lokaliseProjectId: config.lokalise?.projectId || '',
       lokaliseDefaultTag: config.lokalise?.defaultTag || '',
     });
@@ -281,6 +283,30 @@ app.post('/api/upload', async (req, res) => {
       uploaded: result.uploaded,
       failed: result.failed,
     });
+  } catch (error) {
+    res.json({ success: false, message: error.message });
+  }
+});
+
+// API: 保存密钥（仅内存）
+app.post('/api/credentials', async (req, res) => {
+  try {
+    const { deepseekKey, lokaliseToken } = req.body;
+    if (!sessionData.config) {
+      sessionData.config = await loadConfig();
+    }
+    if (!sessionData.config) {
+      return res.json({ success: false, message: '配置加载失败' });
+    }
+
+    if (deepseekKey) {
+      sessionData.config.deepseek.apiKey = deepseekKey;
+    }
+    if (lokaliseToken) {
+      sessionData.config.lokalise.apiToken = lokaliseToken;
+    }
+
+    res.json({ success: true });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }

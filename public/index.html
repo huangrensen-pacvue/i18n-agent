@@ -339,6 +339,30 @@
       </div>
     </div>
 
+    <!-- Credentials Modal -->
+    <div class="modal" id="credentialsModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>🔐 <span data-i18n="credentials_title">Credentials</span></h3>
+          <button class="modal-close" onclick="closeCredentialsModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label data-i18n="deepseek_key">DeepSeek API Key</label>
+            <input type="password" id="deepseekKeyInput" class="input" placeholder="sk-...">
+          </div>
+          <div class="form-group">
+            <label data-i18n="lokalise_token">Lokalise API Token</label>
+            <input type="password" id="lokaliseTokenInput" class="input" placeholder="token">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeCredentialsModal()" data-i18n="cancel">Cancel</button>
+          <button class="btn btn-success" onclick="saveCredentials()" data-i18n="save">Save</button>
+        </div>
+      </div>
+    </div>
+
     <!-- Project Picker Modal -->
     <div class="modal" id="projectPickerModal">
       <div class="modal-content">
