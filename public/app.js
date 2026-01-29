@@ -100,6 +100,7 @@ const translations = {
     credentials_title: 'Credentials',
     deepseek_key: 'DeepSeek API Key',
     lokalise_token: 'Lokalise API Token',
+    credentials_later: 'Later',
     save: 'Save',
     credentials_saved: 'Credentials saved',
     credentials_required: 'Please configure credentials',
@@ -224,6 +225,7 @@ const translations = {
     credentials_title: '密钥配置',
     deepseek_key: 'DeepSeek API Key',
     lokalise_token: 'Lokalise API Token',
+    credentials_later: '稍后配置',
     save: '保存',
     credentials_saved: '密钥已保存',
     credentials_required: '请先配置密钥',
@@ -395,8 +397,14 @@ function openCredentialsModal(force = false) {
 
 function closeCredentialsModal() {
   if (credentialsModalRequired) {
-    return;
+    const stored = loadStoredCredentials();
+    const hasStoredDeepseek = !!stored?.deepseekKey;
+    const hasStoredLokalise = !!stored?.lokaliseToken;
+    if (!hasStoredDeepseek || !hasStoredLokalise) {
+      showToast(t('credentials_required'), 'warning');
+    }
   }
+  credentialsModalRequired = false;
   document.getElementById('credentialsModal').classList.remove('show');
   updateModalOpenState();
 }
