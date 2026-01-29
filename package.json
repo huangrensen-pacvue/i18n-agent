@@ -1,0 +1,37 @@
+{
+  "name": "i18n-agent",
+  "version": "1.1.0",
+  "description": "Internationalization automation tool - auto match/replace/translate/upload",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "i18n-agent": "./bin/cli.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "web": "node server.js",
+    "scan": "node index.js scan",
+    "update": "node index.js update",
+    "translate": "node index.js translate",
+    "upload": "node index.js upload"
+  },
+  "keywords": [
+    "i18n",
+    "internationalization",
+    "translation",
+    "lokalise",
+    "pacvue"
+  ],
+  "author": "RensenHuang",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^5.3.0",
+    "commander": "^12.1.0",
+    "express": "^4.18.2",
+    "glob": "^10.3.10",
+    "inquirer": "^9.2.15",
+    "ora": "^8.0.1",
+    "dotenv": "^16.4.5"
+  }
+}
+

@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🌍 i18n-agent</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="logo">
+        <span class="logo-icon">🌍</span>
+        <span class="logo-text">i18n-agent</span>
+      </div>
+      <div class="header-actions">
+        <!-- Language Toggle -->
+        <div class="lang-toggle">
+          <button class="lang-btn active" data-lang="en" onclick="setLanguage('en')">EN</button>
+          <button class="lang-btn" data-lang="zh" onclick="setLanguage('zh')">中文</button>
+        </div>
+        <div class="header-status">
+          <span class="status-dot" id="configStatus"></span>
+          <span id="configStatusText" data-i18n="checking_config">Checking config...</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+      <!-- Left Sidebar -->
+      <aside class="sidebar">
+        <!-- Step 1: Load CDN -->
+        <section class="card collapsible" id="stepCardLoad">
+          <div class="card-header">
+            <span class="step-badge">1</span>
+            <h3 data-i18n="load_cdn_data">Load CDN Data</h3>
+            <span class="step-status" id="stepStatusLoad" data-i18n="step_waiting">Waiting</span>
+            <button class="collapse-btn" onclick="toggleCollapse('stepCardLoad')" aria-label="Toggle">
+              <span class="collapse-icon">▾</span>
+            </button>
+          </div>
+          <div class="card-body">
+            <p class="help-text" data-i18n="load_cdn_help">Load existing translation data from CDN</p>
+            <div id="cdnSources" class="cdn-sources"></div>
+            <button class="btn btn-primary" id="loadCdnBtn" onclick="loadCDN()">
+              <span class="btn-icon">📥</span>
+              <span data-i18n="load_data">Load Data</span>
+            </button>
+            <div class="result-info" id="cdnResult"></div>
+          </div>
+        </section>
+
+        <!-- Step 2: Scan Directory -->
+        <section class="card collapsible" id="stepCardScan">
+          <div class="card-header">
+            <span class="step-badge">2</span>
+            <h3 data-i18n="scan_project">Scan Project</h3>
+            <span class="step-status" id="stepStatusScan" data-i18n="step_waiting">Waiting</span>
+            <button class="collapse-btn" onclick="toggleCollapse('stepCardScan')" aria-label="Toggle">
+              <span class="collapse-icon">▾</span>
+            </button>
+          </div>
+          <div class="card-body">
+            <p class="help-text" data-i18n="scan_help">Scan $t() calls in your project</p>
+            
+            <!-- Directory Input with Dropdown and Browse -->
+            <div class="input-with-dropdown">
+              <div class="input-wrapper">
+                <input type="text" id="scanDirectory" data-i18n-placeholder="enter_directory" placeholder="Enter project directory path..." class="input" autocomplete="off">
+                <button class="input-browse-btn" onclick="openDirBrowser()" title="Browse folders">
+                  <span>📁</span>
+                </button>
+                <button class="input-dropdown-btn" onclick="toggleRecentDirs()" title="Recent directories">
+                  <span>▼</span>
+                </button>
+              </div>
+              
+              <!-- Recent Directories Dropdown -->
+              <div class="dropdown-menu" id="recentDirsDropdown">
+                <div class="dropdown-header">
+                  <span data-i18n="recent_directories">Recent Directories</span>
+                  <button class="dropdown-clear" onclick="clearRecentDirs()" data-i18n="clear">Clear</button>
+                </div>
+                <div class="dropdown-list" id="recentDirsList">
+                  <div class="dropdown-empty" data-i18n="no_recent">No recent directories</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+              <button class="quick-btn" onclick="pasteFromClipboard()" title="Paste from clipboard">
+                📋 <span data-i18n="paste">Paste</span>
+              </button>
+              <button class="quick-btn" onclick="addToFavorites()" title="Add to favorites">
+                ⭐ <span data-i18n="favorite">Favorite</span>
+              </button>
+            </div>
+            
+            <!-- Favorites -->
+            <div class="favorites-section" id="favoritesSection" style="display: none;">
+              <div class="favorites-header">
+                <span>⭐ <span data-i18n="favorites">Favorites</span></span>
+              </div>
+              <div class="favorites-list" id="favoritesList"></div>
+            </div>
+            
+            <button class="btn btn-primary" id="scanBtn" onclick="scanDirectory()" disabled>
+              <span class="btn-icon">🔍</span>
+              <span data-i18n="start_scan">Start Scan</span>
+            </button>
+            <div class="result-info" id="scanResult"></div>
+          </div>
+        </section>
+
+        <!-- Step 3: Check Status -->
+        <section class="card collapsible" id="stepCardCheck">
+          <div class="card-header">
+            <span class="step-badge">3</span>
+            <h3 data-i18n="check_status">Check Translation Status</h3>
+            <span class="step-status" id="stepStatusCheck" data-i18n="step_waiting">Waiting</span>
+            <button class="collapse-btn" onclick="toggleCollapse('stepCardCheck')" aria-label="Toggle">
+              <span class="collapse-icon">▾</span>
+            </button>
+          </div>
+          <div class="card-body">
+            <p class="help-text" data-i18n="check_help">Check which keys are translated</p>
+            <button class="btn btn-primary" id="checkBtn" onclick="checkTranslation()" disabled>
+              <span class="btn-icon">✅</span>
+              <span data-i18n="start_check">Start Check</span>
+            </button>
+            <div class="result-info" id="checkSummary"></div>
+          </div>
+        </section>
+
+        <!-- Step 4: Run Update Flow -->
+        <section class="card collapsible" id="stepCardUpdate">
+          <div class="card-header">
+            <span class="step-badge">4</span>
+            <h3 data-i18n="run_update">Run Update Flow</h3>
+            <span class="step-status" id="stepStatusUpdate" data-i18n="step_waiting">Waiting</span>
+            <button class="collapse-btn" onclick="toggleCollapse('stepCardUpdate')" aria-label="Toggle">
+              <span class="collapse-icon">▾</span>
+            </button>
+          </div>
+          <div class="card-body">
+            <p class="help-text" data-i18n="update_help">Full flow: load → scan → check → replace → translate → upload</p>
+            
+            <div class="update-options">
+              <label class="checkbox">
+                <input type="checkbox" id="updateDryRun">
+                <span data-i18n="dry_run">Dry run (no file changes)</span>
+              </label>
+              <label class="checkbox">
+                <input type="checkbox" id="updateSkipTranslate">
+                <span data-i18n="skip_translate">Skip translate</span>
+              </label>
+              <label class="checkbox">
+                <input type="checkbox" id="updateSkipUpload">
+                <span data-i18n="skip_upload">Skip upload</span>
+              </label>
+            </div>
+            
+            <div class="form-group">
+              <label data-i18n="upload_tag">Upload tag (optional)</label>
+              <input type="text" id="updateTag" class="input" placeholder="tag">
+            </div>
+            
+            <div class="form-group">
+              <label data-i18n="project_optional">Project (optional)</label>
+              <div class="inline-input">
+                <select id="updateProjectSelect" class="input"></select>
+                <button class="btn btn-secondary btn-small" onclick="loadProjectsForUpdate()" data-i18n="load_projects">Load</button>
+              </div>
+            </div>
+            
+            <button class="btn btn-accent" id="runUpdateBtn" onclick="runUpdateFlow()">
+              <span class="btn-icon">🚀</span>
+              <span data-i18n="run_update">Run Update Flow</span>
+            </button>
+            <div class="result-info" id="updateResult"></div>
+          </div>
+        </section>
+      </aside>
+
+      <!-- Right Content Panel -->
+      <section class="content">
+        <!-- Stats Cards -->
+        <div class="stats-grid" id="statsGrid" style="display: none;">
+          <div class="stat-card stat-success">
+            <div class="stat-icon">✅</div>
+            <div class="stat-info">
+              <div class="stat-value" id="statExisting">0</div>
+              <div class="stat-label" data-i18n="translated">Translated</div>
+            </div>
+          </div>
+          <div class="stat-card stat-warning">
+            <div class="stat-icon">🔄</div>
+            <div class="stat-info">
+              <div class="stat-value" id="statReplace">0</div>
+              <div class="stat-label" data-i18n="need_replace">Need Replace</div>
+            </div>
+          </div>
+          <div class="stat-card stat-danger">
+            <div class="stat-icon">❌</div>
+            <div class="stat-info">
+              <div class="stat-value" id="statMissing">0</div>
+              <div class="stat-label" data-i18n="untranslated">Untranslated</div>
+            </div>
+          </div>
+          <div class="stat-card stat-info">
+            <div class="stat-icon">📊</div>
+            <div class="stat-info">
+              <div class="stat-value" id="statTotal">0</div>
+              <div class="stat-label" data-i18n="total">Total</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-bar" id="actionBar" style="display: none;">
+          <button class="btn btn-warning" id="replaceBtn" onclick="executeReplace()" disabled>
+            <span class="btn-icon">🔄</span>
+            <span data-i18n="execute_replace">Execute Replace</span>
+          </button>
+          <button class="btn btn-accent" id="translateBtn" onclick="translateMissing()" disabled>
+            <span class="btn-icon">🤖</span>
+            <span data-i18n="ai_translate">AI Translate</span>
+          </button>
+          <button class="btn btn-success" id="uploadBtn" onclick="showUploadModal()" disabled>
+            <span class="btn-icon">📤</span>
+            <span data-i18n="upload_lokalise">Upload to Lokalise</span>
+          </button>
+        </div>
+
+        <!-- Results Container -->
+        <div class="results-container" id="resultsContainer">
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <p data-i18n="empty_state">Please load CDN data and scan your project first</p>
+          </div>
+        </div>
+
+        <!-- Need Replace Section -->
+        <div class="result-section collapsible" id="replaceSection" style="display: none;">
+          <div class="section-header">
+            <h4>🔄 <span data-i18n="need_replace_title">Need to Replace with Standard Key</span></h4>
+            <div class="translation-actions">
+              <span class="badge badge-warning" id="replaceCount">0</span>
+              <button class="collapse-btn" onclick="toggleCollapse('replaceSection')" aria-label="Toggle">
+                <span class="collapse-icon">▾</span>
+              </button>
+            </div>
+          </div>
+          <div class="result-list" id="replaceList"></div>
+        </div>
+
+        <!-- Missing Section -->
+        <div class="result-section collapsible" id="missingSection" style="display: none;">
+          <div class="section-header">
+            <h4>❌ <span data-i18n="missing_title">Untranslated (Need Translation)</span></h4>
+            <div class="translation-actions">
+              <button class="btn btn-secondary btn-small" onclick="exportMissing()" data-i18n="export_untranslated">Export</button>
+              <span class="export-note" data-i18n="export_only_text">Only text</span>
+              <span class="badge badge-danger" id="missingCount">0</span>
+              <button class="collapse-btn" onclick="toggleCollapse('missingSection')" aria-label="Toggle">
+                <span class="collapse-icon">▾</span>
+              </button>
+            </div>
+          </div>
+          <div class="result-list" id="missingList"></div>
+        </div>
+
+        <!-- Translation Results -->
+        <div class="result-section collapsible" id="translationSection" style="display: none;">
+          <div class="section-header">
+            <h4>🤖 <span data-i18n="translation_results">Translation Results</span></h4>
+            <div class="translation-actions">
+              <label class="checkbox">
+                <input type="checkbox" id="translationSelectAll" checked onchange="toggleSelectAllTranslations(this)">
+                <span data-i18n="select_all">Select All</span>
+              </label>
+              <span class="badge badge-accent" id="translationCount">0</span>
+              <button class="collapse-btn" onclick="toggleCollapse('translationSection')" aria-label="Toggle">
+                <span class="collapse-icon">▾</span>
+              </button>
+            </div>
+          </div>
+          <div class="result-list" id="translationList"></div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Upload Modal -->
+    <div class="modal" id="uploadModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>📤 <span data-i18n="upload_to_lokalise">Upload to Lokalise</span></h3>
+          <button class="modal-close" onclick="hideUploadModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label data-i18n="select_project">Select Project:</label>
+            <select id="projectSelect" class="input">
+              <option value="" data-i18n="loading">Loading...</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="upload_tag">Upload tag (optional)</label>
+            <input type="text" id="uploadTag" class="input" value="common1">
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="hideUploadModal()" data-i18n="cancel">Cancel</button>
+          <button class="btn btn-success" onclick="executeUpload()" data-i18n="confirm_upload">Confirm Upload</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div class="modal" id="confirmModal">
+      <div class="modal-content confirm-modal">
+        <div class="modal-header">
+          <h3>⚠️ <span data-i18n="confirm_title">Confirm</span></h3>
+          <button class="modal-close" onclick="resolveConfirm(false)">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p id="confirmMessage"></p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="resolveConfirm(false)" data-i18n="cancel">Cancel</button>
+          <button class="btn btn-warning" onclick="resolveConfirm(true)" data-i18n="confirm">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Project Picker Modal -->
+    <div class="modal" id="projectPickerModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>📤 <span data-i18n="select_project">Select Project:</span></h3>
+          <button class="modal-close" onclick="closeProjectPicker()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label data-i18n="select_project">Select Project:</label>
+            <select id="projectPickerSelect" class="input">
+              <option value="" data-i18n="loading">Loading...</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeProjectPicker()" data-i18n="cancel">Cancel</button>
+          <button class="btn btn-success" onclick="confirmProjectPicker()" data-i18n="confirm">Confirm</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Directory Browser Modal -->
+    <div class="modal" id="dirBrowserModal">
+      <div class="modal-content dir-browser-modal">
+        <div class="modal-header">
+          <h3>📁 <span data-i18n="select_directory">Select Directory</span></h3>
+          <button class="modal-close" onclick="closeDirBrowser()">&times;</button>
+        </div>
+        <div class="modal-body dir-browser-body">
+          <!-- Navigation Bar -->
+          <div class="dir-browser-nav">
+            <button class="dir-nav-btn" onclick="goToParentDir()" id="parentDirBtn" disabled>
+              <span>⬆️</span>
+              <span data-i18n="parent_folder">Parent</span>
+            </button>
+            <div class="dir-current-path" id="currentPathDisplay">
+              <span class="path-icon">📂</span>
+              <span id="currentPathText">/</span>
+            </div>
+          </div>
+          
+          <!-- Quick Access / Drives -->
+          <div class="dir-quick-access" id="dirQuickAccess">
+            <div class="dir-quick-header">
+              <div class="dir-section-title" data-i18n="quick_access">Quick Access</div>
+              <div class="dir-history-btns">
+                <button class="dir-history-btn" onclick="goBackDir()" id="backDirBtn" disabled title="Back">
+                  <span>←</span>
+                </button>
+                <button class="dir-history-btn" onclick="goForwardDir()" id="forwardDirBtn" disabled title="Forward">
+                  <span>→</span>
+                </button>
+              </div>
+            </div>
+            <div class="dir-drives-list" id="drivesList"></div>
+          </div>
+          
+          <!-- Breadcrumb Navigation -->
+          <div class="dir-breadcrumb" id="dirBreadcrumb">
+            <div class="breadcrumb-list" id="breadcrumbList"></div>
+          </div>
+          
+          <!-- Directory List -->
+          <div class="dir-list-container">
+            <div class="dir-list" id="dirList">
+              <div class="dir-loading" data-i18n="loading">Loading...</div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <div class="dir-selected-path">
+            <span data-i18n="selected">Selected:</span>
+            <code id="selectedPathDisplay">-</code>
+          </div>
+          <div class="dir-actions">
+            <button class="btn btn-secondary" onclick="closeDirBrowser()" data-i18n="cancel">Cancel</button>
+            <button class="btn btn-primary" onclick="confirmDirSelection()" id="confirmDirBtn" data-i18n="select">Select</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
