@@ -49,6 +49,20 @@ let sessionData = {
   checkResult: null,
 };
 
+function mergeRuntimeCredentials(baseConfig) {
+  if (!baseConfig || !sessionData.config) return baseConfig;
+  const runtimeDeepseek = (sessionData.config.deepseek?.apiKey || '').trim();
+  const runtimeLokalise = (sessionData.config.lokalise?.apiToken || '').trim();
+  if (runtimeDeepseek && runtimeDeepseek !== 'your_deepseek_api_key_here') {
+    baseConfig.deepseek.apiKey = runtimeDeepseek;
+  }
+  if (runtimeLokalise && runtimeLokalise !== 'your_lokalise_api_token_here') {
+    baseConfig.lokalise.apiToken = runtimeLokalise;
+  }
+  return baseConfig;
+}
+
+
 // API: 获取配置状态
 app.get('/api/config', async (req, res) => {
   try {
@@ -56,21 +70,23 @@ app.get('/api/config', async (req, res) => {
     if (!config) {
       return res.json({ success: false, message: '配置文件不存在，请先创建 config.js' });
     }
-    sessionData.config = config;
-    const deepseekKey = (config.deepseek?.apiKey || '').trim();
-    const lokaliseToken = (config.lokalise?.apiToken || '').trim();
+    const mergedConfig = mergeRuntimeCredentials(config);
+    sessionData.config = mergedConfig;
+    const deepseekKey = (mergedConfig.deepseek?.apiKey || '').trim();
+    const lokaliseToken = (mergedConfig.lokalise?.apiToken || '').trim();
     res.json({
       success: true,
-      cdnSources: config.cdn.sources.map(s => s.name),
+      cdnSources: mergedConfig.cdn.sources.map(s => s.name),
       hasDeepseekKey: deepseekKey !== '' && deepseekKey !== 'your_deepseek_api_key_here',
       hasLokaliseToken: lokaliseToken !== '' && lokaliseToken !== 'your_lokalise_api_token_here',
-      lokaliseProjectId: config.lokalise?.projectId || '',
-      lokaliseDefaultTag: config.lokalise?.defaultTag || '',
+      lokaliseProjectId: mergedConfig.lokalise?.projectId || '',
+      lokaliseDefaultTag: mergedConfig.lokalise?.defaultTag || '',
     });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
 });
+
 
 // API: 加载 CDN 数据
 app.post('/api/load-cdn', async (req, res) => {

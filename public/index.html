@@ -23,6 +23,7 @@
           <button class="lang-btn active" data-lang="en" onclick="setLanguage('en')">EN</button>
           <button class="lang-btn" data-lang="zh" onclick="setLanguage('zh')">中文</button>
         </div>
+        <button class="btn btn-secondary btn-small" onclick="openCredentialsModal()" data-i18n="view_config">Config</button>
         <div class="header-status">
           <span class="status-dot" id="configStatus"></span>
           <span id="configStatusText" data-i18n="checking_config">Checking config...</span>
@@ -317,7 +318,7 @@
         </div>
         <div class="modal-footer">
           <button class="btn btn-secondary" onclick="hideUploadModal()" data-i18n="cancel">Cancel</button>
-          <button class="btn btn-success" onclick="executeUpload()" data-i18n="confirm_upload">Confirm Upload</button>
+          <button class="btn btn-success" id="uploadConfirmBtn" onclick="executeUpload()" data-i18n="confirm_upload">Confirm Upload</button>
         </div>
       </div>
     </div>
@@ -349,11 +350,11 @@
         <div class="modal-body">
           <div class="form-group">
             <label data-i18n="deepseek_key">DeepSeek API Key</label>
-            <input type="password" id="deepseekKeyInput" class="input" placeholder="sk-...">
+            <input type="password" id="deepseekKeyInput" class="input" placeholder="sk-..." autocomplete="new-password" data-1p-ignore="true" data-lpignore="true">
           </div>
           <div class="form-group">
             <label data-i18n="lokalise_token">Lokalise API Token</label>
-            <input type="password" id="lokaliseTokenInput" class="input" placeholder="token">
+            <input type="password" id="lokaliseTokenInput" class="input" placeholder="token" autocomplete="new-password" data-1p-ignore="true" data-lpignore="true">
           </div>
         </div>
         <div class="modal-footer">
@@ -362,6 +363,7 @@
         </div>
       </div>
     </div>
+
 
     <!-- Project Picker Modal -->
     <div class="modal" id="projectPickerModal">

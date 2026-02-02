@@ -951,6 +951,7 @@ body.modal-open {
   box-shadow: var(--shadow-lg);
 }
 
+
 .modal-header {
   display: flex;
   justify-content: space-between;
@@ -979,6 +980,7 @@ body.modal-open {
 .modal-body {
   padding: var(--space-lg);
 }
+
 
 .form-group {
   display: flex;

@@ -11,6 +11,7 @@ const translations = {
     checking_config: 'Checking config...',
     config_ready: 'Config ready',
     config_error: 'Config error',
+    view_config: 'Config',
     
     // Step 1
     load_cdn_data: 'Load CDN Data',
@@ -112,6 +113,7 @@ const translations = {
     loading: 'Loading...',
     cancel: 'Cancel',
     confirm_upload: 'Confirm Upload',
+    uploading: 'Uploading...',
     
     // Toast messages
     replace_success: 'Replaced {count} items successfully',
@@ -137,6 +139,7 @@ const translations = {
     checking_config: '检查配置中...',
     config_ready: '配置就绪',
     config_error: '配置错误',
+    view_config: '配置',
     
     // Step 1
     load_cdn_data: '加载 CDN 数据',
@@ -238,6 +241,7 @@ const translations = {
     loading: '加载中...',
     cancel: '取消',
     confirm_upload: '确认上传',
+    uploading: '上传中...',
     
     // Toast messages
     replace_success: '成功替换 {count} 项',
@@ -385,6 +389,18 @@ function updateButtonsState() {
   if (uploadBtn) uploadBtn.disabled = !canUpload;
 
   updateStepStatuses();
+}
+
+function setUploadConfirmLoading(isLoading) {
+  const btn = document.getElementById('uploadConfirmBtn');
+  if (!btn) return;
+  if (isLoading) {
+    btn.disabled = true;
+    btn.innerHTML = `<span class="loading">${t('uploading')}</span>`;
+  } else {
+    btn.disabled = false;
+    btn.textContent = t('confirm_upload');
+  }
 }
 
 function renderCdnSources(sources) {
@@ -1035,8 +1051,13 @@ async function executeUpload() {
     showToast(t('no_items_selected'), 'warning');
     return;
   }
-  
-  await executeUploadWithOptions(projectId, tag, selectedTranslations);
+
+  setUploadConfirmLoading(true);
+  try {
+    await executeUploadWithOptions(projectId, tag, selectedTranslations);
+  } finally {
+    setUploadConfirmLoading(false);
+  }
   hideUploadModal();
 }
 
